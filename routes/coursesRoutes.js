@@ -1,5 +1,5 @@
 const {Router}= require('express')
-const {courseSchema} = require('../db')
+const {CoursesModel} = require('../db')
 
 const coursesRouter= Router()
 
