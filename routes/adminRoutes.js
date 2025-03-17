@@ -1,6 +1,6 @@
 const {Router}= require('express')
-const {AdminModel} = require('../db')
-
+const {AdminModel, CoursesModel} = require('../db')
+const {adminMiddleware} = require('../middlewares/admin')
 const adminRouter= Router()
 const { z } = require('zod')
 const bcrypt = require('bcrypt')
@@ -35,8 +35,6 @@ adminRouter.post('/signup', async function(req,res){
     res.json("Signed up") })
 
 
-
-
 adminRouter.post('/signin',async function(req,res){
     const requiredBody= z.object({
         email: z.string().email(),
@@ -49,15 +47,17 @@ adminRouter.post('/signin',async function(req,res){
         return
     }
     const {email, password} = req.body
-    
+    console.log(email)
     try{
     const admin= await AdminModel.findOne({
         email:email
     })
+    console.log(admin)
     if(admin){
         const verified = await bcrypt.compare(password,admin.password)
+        console.log(verified)
         if(verified){
-            const token = jwt.sign({id:admin._id},process.env.JWT_TOKEN_ADMIN)
+            const token = jwt.sign({id:admin._id},process.env.JWT_SECRET_ADMIN)
             console.log(token)
             res.json({"token": token})
         }else{
@@ -71,6 +71,72 @@ adminRouter.post('/signin',async function(req,res){
     }
 })
 
+
+adminRouter.post('/createcourse',adminMiddleware, async function(req,res){
+
+    const adminId= req.userId;
+    const {title,description,price,imageUrl} = req.body
+
+    try{
+    const course= await CoursesModel.create({
+        title: title,
+        description: description,
+        price:price,
+        imageUrl:imageUrl,
+        creatorId: adminId
+    })
+        if(course){
+            res.json({"Course created with id" : course._id})
+        }
+    } catch(error){
+        res.json("Course not created")
+    }
+})
+
+
+adminRouter.put('/modifycourse',adminMiddleware,async function(req,res){
+    
+    const {title, description, price, imageUrl} = req.body;
+
+    const adminId = req.userId;
+    const courseId = req.body.courseId;
+    try{
+    const course =await CoursesModel.updateOne({_id:courseId,
+        creatorId: adminId
+    },{
+        title: title,
+        description: description,
+        price:price,
+        imageUrl:imageUrl,
+    })
+    console.log(course)
+    if(course){
+    res.json("Changes made")
+    } else{
+        res.json("Couldnt find course")
+    }
+}catch(error){
+    res.json("Some error login again")
+}
+
+})
+
+
+adminRouter.get('/getcourses', async function(req,res){
+    const adminId = req.userId
+    try{const courses= await CoursesModel.find({
+        creatorId: adminId
+    })
+    console.log(courses)
+    if(courses){
+    res.json({"courses": courses})
+}else{
+    res.json("no courses")
+}
+}catch(e){
+    res.json("some error try again")
+}
+})
 
 
 module.exports={

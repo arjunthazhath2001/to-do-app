@@ -1,10 +1,10 @@
-
 const {Router} = require('express')
 const {UserModel} = require('../db')
 const { z } = require('zod')
 const bcrypt = require('bcrypt')
 const userRouter= Router()
 const jwt = require('jsonwebtoken')
+const {userMiddleware} = require('../middlewares/users')
 
 userRouter.post('/signup', async function(req,res){
     const requiredBody = z.object({
@@ -69,6 +69,11 @@ userRouter.post('/signin', async function(req,res){
     } catch(error){
         res.json({"Cannot find user": error})
     }
+})
+
+userRouter.get('/mycourses', userMiddleware,async function(req,res){
+    const userId= req.userId;
+    res.json({"userId": userId})
 })
 
 
