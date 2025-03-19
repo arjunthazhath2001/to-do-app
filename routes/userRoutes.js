@@ -1,5 +1,5 @@
 const {Router} = require('express')
-const {UserModel} = require('../db')
+const {UserModel, CoursesModel, PurchaseModel} = require('../db')
 const { z } = require('zod')
 const bcrypt = require('bcrypt')
 const userRouter= Router()
@@ -60,7 +60,7 @@ userRouter.post('/signin', async function(req,res){
     console.log(verified)
     if(verified){
         console.log("hi")
-        const token= await jwt.sign({id: user._id}, process.env.JWT_TOKEN_USER)
+        const token= jwt.sign({id: user._id}, process.env.JWT_SECRET_USER)
         console.log(token)
         res.json({token: token, message:"All good"})
     } else{
@@ -71,9 +71,16 @@ userRouter.post('/signin', async function(req,res){
     }
 })
 
-userRouter.get('/mycourses', userMiddleware,async function(req,res){
+userRouter.get('/mypurchases', userMiddleware,async function(req,res){
     const userId= req.userId;
-    res.json({"userId": userId})
+    try{const purchases= await PurchaseModel.find({
+        userId : userId
+    })
+    res.json(purchases)
+    }catch(e){
+        res.json("some error fetching ur purchases")
+    }
+
 })
 
 

@@ -122,8 +122,9 @@ adminRouter.put('/modifycourse',adminMiddleware,async function(req,res){
 })
 
 
-adminRouter.get('/getcourses', async function(req,res){
+adminRouter.get('/getcourses', adminMiddleware, async function(req,res){
     const adminId = req.userId
+    console.log(adminId)
     try{const courses= await CoursesModel.find({
         creatorId: adminId
     })
